@@ -1,0 +1,251 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////
+
+enum Platform {
+  WHATSAPP
+  TELEGRAM
+  WEB
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  BLOCKED
+}
+
+enum SenderType {
+  CONSUMER
+  BOT
+  ADMIN
+}
+
+enum EntryStatus {
+  PENDING
+  VALID
+  INVALID
+}
+
+enum ValidationStatus {
+  APPROVED
+  REJECTED
+}
+
+//////////////////////////////////////////////////
+// USER CONSUMER
+//////////////////////////////////////////////////
+
+model UserConsumer {
+  id          String   @id @default(uuid())
+  phone       String   @unique
+  name        String?
+  email       String?
+  platform    Platform
+  isActive    Boolean  @default(true)
+
+  conversations Conversation[]
+  entries       Entry[]
+  whitelist     Whitelist?
+  blacklist     Blacklist?
+  winners       Winner[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////
+// USER ADMIN (DASHBOARD)
+//////////////////////////////////////////////////
+
+model UserAdmin {
+  id            String @id @default(uuid())
+  name          String
+  email         String @unique
+  passwordHash  String
+  isActive      Boolean @default(true)
+
+  roles         AdminUserRole[]
+  replies       Reply[]
+  validations   Validation[]
+  whitelists    Whitelist[]
+  blacklists    Blacklist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////
+// RBAC TABLES
+//////////////////////////////////////////////////
+
+model AdminRole {
+  id          String @id @default(uuid())
+  name        String @unique // super_admin, admin, validator
+  description String?
+
+  users       AdminUserRole[]
+  permissions AdminRolePermission[]
+
+  createdAt DateTime @default(now())
+}
+
+model AdminPermission {
+  id          String @id @default(uuid())
+  code        String @unique // MANAGE_USER, VALIDATE_ENTRY
+  description String?
+
+  roles       AdminRolePermission[]
+
+  createdAt DateTime @default(now())
+}
+
+model AdminUserRole {
+  id        String @id @default(uuid())
+  adminId  String
+  roleId   String
+
+  admin UserAdmin @relation(fields: [adminId], references: [id])
+  role  AdminRole @relation(fields: [roleId], references: [id])
+
+  @@unique([adminId, roleId])
+}
+
+model AdminRolePermission {
+  id            String @id @default(uuid())
+  roleId        String
+  permissionId  String
+
+  role        AdminRole       @relation(fields: [roleId], references: [id])
+  permission  AdminPermission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+//////////////////////////////////////////////////
+// CHATBOT TABLES
+//////////////////////////////////////////////////
+
+model Conversation {
+  id             String @id @default(uuid())
+  userConsumerId String
+  channel        Platform
+  status         ConversationStatus @default(OPEN)
+
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
+  messages     Message[]
+  entries      Entry[]
+
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+}
+
+model Message {
+  id             String @id @default(uuid())
+  conversationId String
+  senderType     SenderType
+  senderId       String?
+  messageType    String
+  content        String
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Reply {
+  id          String @id @default(uuid())
+  code        String @unique
+  content     String
+  isActive    Boolean @default(true)
+  createdBy  String
+
+  admin UserAdmin @relation(fields: [createdBy], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+//////////////////////////////////////////////////
+// PROMO TABLES
+//////////////////////////////////////////////////
+
+model Entry {
+  id             String @id @default(uuid())
+  userConsumerId String
+  conversationId String
+  entryType      String
+  payload        Json
+  status         EntryStatus @default(PENDING)
+
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  validations  Validation[]
+  winner       Winner?
+
+  createdAt DateTime @default(now())
+}
+
+model Validation {
+  id           String @id @default(uuid())
+  entryId      String
+  validatedBy  String
+  status       ValidationStatus
+  notes        String?
+
+  entry Entry     @relation(fields: [entryId], references: [id])
+  admin UserAdmin @relation(fields: [validatedBy], references: [id])
+
+  validatedAt DateTime @default(now())
+}
+
+model Winner {
+  id             String @id @default(uuid())
+  entryId        String @unique
+  userConsumerId String
+  prizeName      String
+
+  entry        Entry        @relation(fields: [entryId], references: [id])
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
+
+  announcedAt DateTime @default(now())
+}
+
+//////////////////////////////////////////////////
+// WHITELIST & BLACKLIST
+//////////////////////////////////////////////////
+
+model Whitelist {
+  id             String @id @default(uuid())
+  userConsumerId String @unique
+  reason         String?
+  createdBy      String
+
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
+  admin        UserAdmin    @relation(fields: [createdBy], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Blacklist {
+  id             String @id @default(uuid())
+  userConsumerId String @unique
+  reason         String?
+  createdBy      String
+
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
+  admin        UserAdmin    @relation(fields: [createdBy], references: [id])
+
+  createdAt DateTime @default(now())
+}
