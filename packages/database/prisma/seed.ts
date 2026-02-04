@@ -15,7 +15,7 @@ async function main() {
     },
   });
 
-  const adminRole = await prisma.adminRole.upsert({
+  await prisma.adminRole.upsert({
     where: { name: 'admin' },
     update: {},
     create: {
@@ -24,7 +24,7 @@ async function main() {
     },
   });
 
-  const validatorRole = await prisma.adminRole.upsert({
+  await prisma.adminRole.upsert({
     where: { name: 'validator' },
     update: {},
     create: {
@@ -76,7 +76,8 @@ async function main() {
   console.log('✅ Assigned permissions to super_admin');
 
   // Create sample replies
-  const sampleReplies = [
+  // @ts-expect-error - Variable is kept for future use when admin user creation is implemented
+  const _sampleReplies = [
     { code: 'WELCOME', content: 'Selamat datang di Smart Chatbot! 👋' },
     { code: 'HELP', content: 'Ketik "menu" untuk melihat daftar perintah yang tersedia.' },
     { code: 'INVALID_ENTRY', content: 'Maaf, entri Anda tidak valid. Silakan coba lagi.' },
@@ -87,7 +88,7 @@ async function main() {
   // You can uncomment this after creating your first admin user
   // const defaultAdmin = await prisma.userAdmin.findFirst();
   // if (defaultAdmin) {
-  //   for (const reply of sampleReplies) {
+  //   for (const reply of _sampleReplies) {
   //     await prisma.reply.upsert({
   //       where: { code: reply.code },
   //       update: {},

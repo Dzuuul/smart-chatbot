@@ -1,0 +1,342 @@
+.pageContainer {
+  display: flex;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Article Content */
+.article {
+  flex: 1;
+  max-width: 800px;
+  min-width: 0;
+}
+
+.pageTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: #111827;
+}
+
+.pageSubtitle {
+  font-size: 1.125rem;
+  color: #6b7280;
+  margin: 0 0 2rem 0;
+  line-height: 1.75;
+}
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.section h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 2rem 0 1rem 0;
+  color: #111827;
+  scroll-margin-top: 100px;
+}
+
+.section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem 0;
+  color: #374151;
+}
+
+.section h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+  color: #374151;
+}
+
+.section p {
+  line-height: 1.75;
+  color: #4b5563;
+  margin: 0 0 1rem 0;
+}
+
+.section ul {
+  line-height: 1.75;
+  color: #4b5563;
+  margin: 0 0 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.section li {
+  margin: 0.5rem 0;
+}
+
+/* Feature Grid */
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.featureCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.featureCard:hover {
+  border-color: #6366f1;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+.featureIcon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.featureCard h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: #111827;
+}
+
+.featureCard p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Code Blocks */
+.codeBlock {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  border: 1px solid #334155;
+}
+
+.codeBlock pre {
+  margin: 0;
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.codeBlock code {
+  color: #e2e8f0;
+}
+
+/* Warning Box */
+.warningBox {
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.warningBox h3 {
+  margin-top: 0;
+  color: #92400e;
+  font-size: 1.125rem;
+}
+
+.warningBox ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  color: #78350f;
+}
+
+.warningBox li {
+  margin: 0.5rem 0;
+}
+
+/* Troubleshoot Items */
+.troubleshootItem {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.troubleshootItem h4 {
+  margin-top: 0;
+  color: #dc2626;
+  font-size: 1rem;
+}
+
+.troubleshootItem ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  color: #4b5563;
+}
+
+.troubleshootItem code {
+  background: #e5e7eb;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+/* Table of Contents */
+.toc {
+  width: 200px;
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+  flex-shrink: 0;
+}
+
+.tocHeader {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.tocNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tocLink {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-decoration: none;
+  padding: 0.25rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.tocLink:hover {
+  color: #6366f1;
+  border-left-color: #e5e7eb;
+}
+
+.tocLinkActive {
+  font-size: 0.875rem;
+  color: #6366f1;
+  text-decoration: none;
+  padding: 0.25rem 0;
+  border-left: 2px solid #6366f1;
+  padding-left: 0.75rem;
+  font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pageTitle {
+    color: #f9fafb;
+  }
+
+  .pageSubtitle {
+    color: #9ca3af;
+  }
+
+  .section h2 {
+    color: #f9fafb;
+  }
+
+  .section h3,
+  .section h4 {
+    color: #e5e7eb;
+  }
+
+  .section p,
+  .section ul {
+    color: #d1d5db;
+  }
+
+  .featureCard {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .featureCard:hover {
+    border-color: #818cf8;
+  }
+
+  .featureCard h3 {
+    color: #f9fafb;
+  }
+
+  .featureCard p {
+    color: #9ca3af;
+  }
+
+  .warningBox {
+    background: #422006;
+    border-color: #d97706;
+  }
+
+  .warningBox h3 {
+    color: #fbbf24;
+  }
+
+  .warningBox ul {
+    color: #fde68a;
+  }
+
+  .troubleshootItem {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .troubleshootItem code {
+    background: #334155;
+    color: #e5e7eb;
+  }
+
+  .tocHeader {
+    color: #9ca3af;
+  }
+
+  .tocLink {
+    color: #9ca3af;
+  }
+
+  .tocLink:hover {
+    color: #818cf8;
+    border-left-color: #334155;
+  }
+
+  .tocLinkActive {
+    color: #818cf8;
+    border-left-color: #818cf8;
+  }
+}
+
+@media (max-width: 1024px) {
+  .toc {
+    display: none;
+  }
+
+  .article {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageContainer {
+    padding: 1rem;
+  }
+
+  .pageTitle {
+    font-size: 2rem;
+  }
+
+  .featureGrid {
+    grid-template-columns: 1fr;
+  }
+}

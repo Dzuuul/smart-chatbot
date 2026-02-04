@@ -1,0 +1,152 @@
+.docsContainer {
+  display: flex;
+  min-height: 100vh;
+  background: #fafafa;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebarHeader {
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: #000;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.logoHighlight {
+  background: #6366f1;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.nav {
+  flex: 1;
+  padding: 1rem 0;
+}
+
+.navSection {
+  margin-bottom: 1.5rem;
+}
+
+.navTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  padding: 0 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navList li {
+  margin: 0;
+}
+
+.navLink {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.navLink:hover {
+  background: #f3f4f6;
+  color: #6366f1;
+  border-left-color: #6366f1;
+}
+
+.sidebarFooter {
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.sidebarFooter p {
+  margin: 0;
+}
+
+/* Main Content */
+.mainContent {
+  flex: 1;
+  margin-left: 240px;
+  padding: 2rem;
+  max-width: 1400px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .docsContainer {
+    background: #0f172a;
+  }
+
+  .sidebar {
+    background: #1e293b;
+    border-right-color: #334155;
+  }
+
+  .sidebarHeader {
+    border-bottom-color: #334155;
+  }
+
+  .logo {
+    color: white;
+  }
+
+  .navTitle {
+    color: #94a3b8;
+  }
+
+  .navLink {
+    color: #cbd5e1;
+  }
+
+  .navLink:hover {
+    background: #334155;
+    color: #818cf8;
+  }
+
+  .sidebarFooter {
+    border-top-color: #334155;
+    color: #64748b;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  .mainContent {
+    margin-left: 200px;
+    padding: 1rem;
+  }
+}

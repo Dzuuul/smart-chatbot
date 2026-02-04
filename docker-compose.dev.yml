@@ -1,10 +1,9 @@
 # Docker Compose Development Configuration
-version: '3.8'
 
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: smart-chatbot-db-dev
     restart: unless-stopped
     ports:

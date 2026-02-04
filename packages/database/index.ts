@@ -18,3 +18,5 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Export all Prisma types
 export * from './generated/prisma';
+export { PrismaClient } from './generated/prisma';
+export type { Prisma } from './generated/prisma';
