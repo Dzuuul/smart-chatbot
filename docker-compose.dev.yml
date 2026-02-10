@@ -12,6 +12,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: smart_chatbot
+      TZ: Asia/Jakarta
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     networks:
@@ -32,6 +33,7 @@ services:
       - "5555:5555"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/smart_chatbot?schema=public
+      TZ: Asia/Jakarta
     volumes:
       - ./packages/database:/app/packages/database
       - ./package.json:/app/package.json

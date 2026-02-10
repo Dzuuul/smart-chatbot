@@ -11,6 +11,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: smart_chatbot
+      TZ: Asia/Jakarta
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -34,6 +35,7 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/smart_chatbot?schema=public
+      TZ: Asia/Jakarta
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,6 +61,7 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: http://localhost:3001
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/smart_chatbot?schema=public
+      TZ: Asia/Jakarta
     depends_on:
       - postgres
       - api
@@ -76,6 +79,7 @@ services:
       - "3002:3002"
     environment:
       NODE_ENV: production
+      TZ: Asia/Jakarta
     depends_on:
       - postgres
     networks:
@@ -92,6 +96,7 @@ services:
       - "5555:5555"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/smart_chatbot?schema=public
+      TZ: Asia/Jakarta
     volumes:
       - ./packages/database:/app/packages/database
       - ./package.json:/app/package.json

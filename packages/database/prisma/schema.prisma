@@ -2,8 +2,9 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider        = "prisma-client-js"
+  output          = "../generated/prisma"
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
@@ -44,26 +45,68 @@ enum ValidationStatus {
   REJECTED
 }
 
+// New Enums for Chatbot Journey
+enum StepType {
+  INPUT
+  BUTTON
+  INFO
+}
+
+enum ReplyType {
+  TEXT
+  BUTTON
+  IMAGE
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum ValidationResultStatus {
+  SUCCESS
+  FAILED
+}
+
+enum TemplateReplyType {
+  TEXT
+  BUTTON
+  MIXED
+  LIST
+  FLOW
+  TEMPLATE
+}
+
 //////////////////////////////////////////////////
 // USER CONSUMER
 //////////////////////////////////////////////////
 
 model UserConsumer {
-  id          String   @id @default(uuid())
-  phone       String   @unique
-  name        String?
-  email       String?
-  platform    Platform
-  isActive    Boolean  @default(true)
+  id       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phone    String   @unique @db.VarChar(20)
+  name     String?  @db.VarChar(255)
+  email    String?  @db.VarChar(255)
+  platform Platform
+  isActive Boolean  @default(true) @map("is_active")
 
+  // Relations
   conversations Conversation[]
   entries       Entry[]
-  whitelist     Whitelist?
-  blacklist     Blacklist?
+  sessions      UserSession[]
   winners       Winner[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Compliance
+  whitelist Whitelist?
+  blacklist Blacklist?
+
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([phone])
+  @@index([email])
+  @@index([platform])
+  @@index([createdAt])
+  @@map("user_consumers")
 }
 
 //////////////////////////////////////////////////
@@ -71,20 +114,25 @@ model UserConsumer {
 //////////////////////////////////////////////////
 
 model UserAdmin {
-  id            String @id @default(uuid())
-  name          String
-  email         String @unique
-  passwordHash  String
-  isActive      Boolean @default(true)
+  id                 String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String  @db.VarChar(255)
+  email              String  @unique @db.VarChar(255)
+  passwordHash       String  @db.VarChar(255)
+  hashedRefreshToken String? @db.VarChar(255)
+  isActive           Boolean @default(true)
 
-  roles         AdminUserRole[]
-  replies       Reply[]
-  validations   Validation[]
-  whitelists    Whitelist[]
-  blacklists    Blacklist[]
+  roles           AdminUserRole[]
+  templateReplies TemplateReply[] @relation("AdminTemplateReplies")
+  entryApprovals  EntryApproval[] @relation("AdminEntryApprovals")
+  whitelists      Whitelist[]
+  blacklists      Blacklist[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(3)
+  updatedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @updatedAt @db.Timestamptz(3)
+
+  @@index([email])
+  @@index([isActive])
+  @@map("user_admins")
 }
 
 //////////////////////////////////////////////////
@@ -92,89 +140,242 @@ model UserAdmin {
 //////////////////////////////////////////////////
 
 model AdminRole {
-  id          String @id @default(uuid())
-  name        String @unique // super_admin, admin, validator
-  description String?
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String  @unique @db.VarChar(100) // super_admin, admin, validator
+  description String? @db.Text
 
   users       AdminUserRole[]
   permissions AdminRolePermission[]
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(3)
+
+  @@index([name])
+  @@map("admin_roles")
 }
 
 model AdminPermission {
-  id          String @id @default(uuid())
-  code        String @unique // MANAGE_USER, VALIDATE_ENTRY
-  description String?
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String  @unique @db.VarChar(100)
+  description String? @db.Text
 
-  roles       AdminRolePermission[]
+  roles AdminRolePermission[]
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(3)
+
+  @@index([code])
+  @@map("admin_permissions")
 }
 
 model AdminUserRole {
-  id        String @id @default(uuid())
-  adminId  String
-  roleId   String
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId String @db.Uuid
+  roleId  String @db.Uuid
 
-  admin UserAdmin @relation(fields: [adminId], references: [id])
-  role  AdminRole @relation(fields: [roleId], references: [id])
+  admin UserAdmin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  role  AdminRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([adminId, roleId])
+  @@index([adminId])
+  @@index([roleId])
+  @@map("admin_user_roles")
 }
 
 model AdminRolePermission {
-  id            String @id @default(uuid())
-  roleId        String
-  permissionId  String
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
 
-  role        AdminRole       @relation(fields: [roleId], references: [id])
-  permission  AdminPermission @relation(fields: [permissionId], references: [id])
+  role       AdminRole       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission AdminPermission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("admin_role_permissions")
 }
 
 //////////////////////////////////////////////////
-// CHATBOT TABLES
+// CHATBOT JOURNEY ENGINE (NEW)
 //////////////////////////////////////////////////
 
-model Conversation {
-  id             String @id @default(uuid())
-  userConsumerId String
-  channel        Platform
-  status         ConversationStatus @default(OPEN)
+model Journey {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String  @db.VarChar(255)
+  triggerKeyword String  @map("trigger_keyword") @db.VarChar(100)
+  isActive       Boolean @default(true) @map("is_active")
+  startStepId    String? @map("start_step_id") @db.Uuid
 
-  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
-  messages     Message[]
-  entries      Entry[]
+  // Relations
+  steps    JourneyStep[]
+  sessions UserSession[]
+  entries  Entry[]
 
-  startedAt DateTime @default(now())
-  endedAt   DateTime?
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at") @db.Timestamptz(3)
+
+  @@index([triggerKeyword])
+  @@map("journeys")
 }
 
-model Message {
-  id             String @id @default(uuid())
-  conversationId String
-  senderType     SenderType
-  senderId       String?
-  messageType    String
-  content        String
+model JourneyStep {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journeyId String   @map("journey_id") @db.Uuid
+  name      String   @db.VarChar(255)
+  stepOrder Int      @map("step_order")
+  stepType  StepType @map("step_type")
+  isActive  Boolean  @default(true) @map("is_active")
 
-  conversation Conversation @relation(fields: [conversationId], references: [id])
+  // Relations
+  journey         Journey         @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  replies         Reply[]
+  validations     Validation[]
+  currentSessions UserSession[]   @relation("CurrentStep")
+  validationLogs  ValidationLog[]
 
-  createdAt DateTime @default(now())
+  @@index([journeyId])
+  @@index([stepOrder])
+  @@map("journey_steps")
 }
 
 model Reply {
-  id          String @id @default(uuid())
-  code        String @unique
-  content     String
-  isActive    Boolean @default(true)
-  createdBy  String
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stepId     String    @map("step_id") @db.Uuid
+  message    String    @db.Text
+  replyType  ReplyType @map("reply_type")
+  nextStepId String?   @map("next_step_id") @db.Uuid
+  isActive   Boolean   @default(true) @map("is_active")
 
-  admin UserAdmin @relation(fields: [createdBy], references: [id])
+  // Relations
+  step JourneyStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
+  @@index([stepId])
+  @@map("replies")
+}
+
+model Validation {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stepId         String  @map("step_id") @db.Uuid
+  validationType String  @map("validation_type") @db.VarChar(50)
+  field          String  @db.VarChar(100)
+  operator       String  @db.VarChar(20)
+  value          String  @db.Text
+  errorReplyId   String? @map("error_reply_id") @db.Uuid
+  orderNo        Int     @map("order_no")
+  isActive       Boolean @default(true) @map("is_active")
+
+  // Relations
+  step JourneyStep     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  logs ValidationLog[]
+
+  @@index([stepId])
+  @@map("validations")
+}
+
+model UserSession {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String        @map("user_id") @db.Uuid
+  journeyId         String        @map("journey_id") @db.Uuid
+  currentStepId     String?       @map("current_step_id") @db.Uuid
+  status            SessionStatus
+  startedAt         DateTime      @default(dbgenerated("CURRENT_TIMESTAMP")) @map("started_at") @db.Timestamptz(3)
+  lastInteractionAt DateTime?     @map("last_interaction_at") @db.Timestamptz(3)
+
+  // Relations
+  user          UserConsumer   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  journey       Journey        @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  currentStep   JourneyStep?   @relation("CurrentStep", fields: [currentStepId], references: [id])
+  conversations Conversation[]
+
+  @@index([userId])
+  @@index([journeyId])
+  @@index([status])
+  @@map("user_sessions")
+}
+
+model ValidationLog {
+  id           String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String                 @map("user_id") @db.Uuid
+  stepId       String                 @map("step_id") @db.Uuid
+  validationId String                 @map("validation_id") @db.Uuid
+  status       ValidationResultStatus
+  reason       String?                @db.Text
+  createdAt    DateTime               @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at") @db.Timestamptz(3)
+
+  // Relations
+  step       JourneyStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  validation Validation  @relation(fields: [validationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stepId])
+  @@index([status])
+  @@map("validation_logs")
+}
+
+//////////////////////////////////////////////////
+// CONVERSATION & MESSAGES
+//////////////////////////////////////////////////
+
+model Conversation {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userConsumerId String             @map("user_id") @db.Uuid
+  sessionId      String?            @map("session_id") @db.Uuid
+  channel        Platform
+  status         ConversationStatus @default(OPEN)
+
+  // Relations
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id], onDelete: Cascade)
+  session      UserSession? @relation(fields: [sessionId], references: [id])
+  messages     Message[]
+  entries      Entry[]
+
+  startedAt DateTime  @default(dbgenerated("CURRENT_TIMESTAMP")) @map("started_at") @db.Timestamptz(3)
+  endedAt   DateTime? @db.Timestamptz(3)
+
+  @@index([userConsumerId])
+  @@index([sessionId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String     @map("conversation_id") @db.Uuid
+  senderType     SenderType @map("sender")
+  senderId       String?
+  messageType    String     @db.VarChar(50)
+  content        String     @map("message") @db.Text
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at") @db.Timestamptz(3)
+
+  @@index([conversationId])
+  @@index([senderType])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+//////////////////////////////////////////////////
+// LEGACY / ADMIN TEMPLATES
+//////////////////////////////////////////////////
+
+// Renamed from Reply to TemplateReply to avoid collision with Journey Reply
+model TemplateReply {
+  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String            @unique @db.VarChar(100)
+  type      TemplateReplyType @default(TEXT)
+  content   String            @db.Text
+  isActive  Boolean           @default(true)
+  createdBy String            @db.Uuid
+
+  admin UserAdmin @relation("AdminTemplateReplies", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(3)
+
+  @@index([code])
+  @@index([isActive])
+  @@map("template_replies")
 }
 
 //////////////////////////////////////////////////
@@ -182,44 +383,63 @@ model Reply {
 //////////////////////////////////////////////////
 
 model Entry {
-  id             String @id @default(uuid())
-  userConsumerId String
-  conversationId String
-  entryType      String
-  payload        Json
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userConsumerId String      @map("user_id") @db.Uuid
+  conversationId String?     @db.Uuid
+  journeyId      String?     @map("journey_id") @db.Uuid
+  entryType      String      @db.VarChar(100)
+  payload        Json?       @db.JsonB
   status         EntryStatus @default(PENDING)
 
-  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
-  conversation Conversation @relation(fields: [conversationId], references: [id])
-  validations  Validation[]
+  // Relations
+  userConsumer UserConsumer    @relation(fields: [userConsumerId], references: [id], onDelete: Cascade)
+  conversation Conversation?   @relation(fields: [conversationId], references: [id])
+  journey      Journey?        @relation(fields: [journeyId], references: [id])
+  approvals    EntryApproval[] // Renamed from validations
   winner       Winner?
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userConsumerId])
+  @@index([conversationId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("entries")
 }
 
-model Validation {
-  id           String @id @default(uuid())
-  entryId      String
-  validatedBy  String
-  status       ValidationStatus
-  notes        String?
+// Renamed from Validation to EntryApproval to avoid collision with Journey Validation
+model EntryApproval {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entryId     String           @db.Uuid
+  validatedBy String           @db.Uuid
+  status      ValidationStatus
+  notes       String?          @db.Text
 
-  entry Entry     @relation(fields: [entryId], references: [id])
-  admin UserAdmin @relation(fields: [validatedBy], references: [id])
+  entry Entry     @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  admin UserAdmin @relation("AdminEntryApprovals", fields: [validatedBy], references: [id], onDelete: Restrict)
 
-  validatedAt DateTime @default(now())
+  validatedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(3)
+
+  @@index([entryId])
+  @@index([validatedBy])
+  @@index([status])
+  @@map("entry_approvals")
 }
 
 model Winner {
-  id             String @id @default(uuid())
-  entryId        String @unique
-  userConsumerId String
-  prizeName      String
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entryId        String @unique @db.Uuid
+  userConsumerId String @db.Uuid
+  prizeName      String @db.VarChar(255)
 
-  entry        Entry        @relation(fields: [entryId], references: [id])
-  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
+  entry        Entry        @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id], onDelete: Cascade)
 
-  announcedAt DateTime @default(now())
+  announcedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(3)
+
+  @@index([userConsumerId])
+  @@index([announcedAt])
+  @@map("winners")
 }
 
 //////////////////////////////////////////////////
@@ -227,25 +447,33 @@ model Winner {
 //////////////////////////////////////////////////
 
 model Whitelist {
-  id             String @id @default(uuid())
-  userConsumerId String @unique
-  reason         String?
-  createdBy      String
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userConsumerId String  @unique @db.Uuid
+  reason         String? @db.Text
+  createdBy      String  @db.Uuid
 
-  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
-  admin        UserAdmin    @relation(fields: [createdBy], references: [id])
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id], onDelete: Cascade)
+  admin        UserAdmin    @relation(fields: [createdBy], references: [id], onDelete: Restrict)
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(3)
+
+  @@index([createdBy])
+  @@index([createdAt])
+  @@map("whitelists")
 }
 
 model Blacklist {
-  id             String @id @default(uuid())
-  userConsumerId String @unique
-  reason         String?
-  createdBy      String
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userConsumerId String  @unique @db.Uuid
+  reason         String? @db.Text
+  createdBy      String  @db.Uuid
 
-  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id])
-  admin        UserAdmin    @relation(fields: [createdBy], references: [id])
+  userConsumer UserConsumer @relation(fields: [userConsumerId], references: [id], onDelete: Cascade)
+  admin        UserAdmin    @relation(fields: [createdBy], references: [id], onDelete: Restrict)
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz(3)
+
+  @@index([createdBy])
+  @@index([createdAt])
+  @@map("blacklists")
 }
